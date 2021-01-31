@@ -125,6 +125,16 @@ list(APPEND GAME_SOURCE
     ./libs/tm-parser/textmate/theme/util.cpp)
 
 list(APPEND GAME_SOURCE
+     ./libs/imgui/CCIMGUI.cpp
+     ./libs/imgui/CCImGuiLayer.cpp
+     ./libs/imgui/imgui.cpp
+     ./libs/imgui/imgui_demo.cpp
+     ./libs/imgui/imgui_draw.cpp
+     ./libs/imgui/imgui_impl_cocos2dx.cpp
+     #./libs/imgui/imgui_lua.cpp
+     ./libs/imgui/imgui_widgets.cpp)
+
+list(APPEND GAME_SOURCE
     ./libs/ashlar/app.cpp
     ./libs/ashlar/block.cpp
     ./libs/ashlar/completer.cpp

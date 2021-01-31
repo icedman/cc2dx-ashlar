@@ -128,9 +128,9 @@ bool HelloWorld::init()
         Size tsz = displayMap->getTileSize();
         app_t::log("map: %d %d %d %d", (int)msz.width, (int)msz.height, (int)tsz.width, (int)tsz.height);
     }
-    displayMap->setTerminalSize(Size(80,25));
+    displayMap->setTerminalSize(Size(80,50));
     displayMap->setScale(3.0);
-    // displayMap->positionAndScale(CursesTileMap::MapAlign::Center, CursesTileMap::MapAlign::Middle, 0);
+    displayMap->positionAndScale(CursesTileMap::MapAlign::Center, CursesTileMap::MapAlign::Middle, 0);
     this->addChild(displayMap);
 
     scheduleUpdate();
@@ -206,7 +206,8 @@ void HelloWorld::update(float dt)
 
     app.update(delta);
     app.preLayout();
-    app.layout(0, 0, 80, 50);
+    Size sz = displayMap->getMapSize();
+    app.layout(0, 0, sz.width - 2, sz.height - 2);
     app.preRender();
     app.render();
 
