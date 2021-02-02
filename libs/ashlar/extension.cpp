@@ -25,7 +25,7 @@ void load_extensions(const std::string _path, std::vector<struct extension_t>& e
     for (const auto& extensionPath : enumerate_dir(path)) {
         std::string package = extensionPath + "/package.json";
 
-        // app_t::instance()->log("extension: %s", package.c_str());
+        app_t::instance()->log("extension: %s", package.c_str());
 
         // qDebug() << package;
         struct extension_t ex = {
@@ -172,6 +172,8 @@ language_info_ptr language_from_file(const std::string path, std::vector<struct 
         // qDebug() << "langauge matched from cache" << it->second->id.c_str();
         return it->second;
     }
+
+    app_t::log("finding language: %s", path.c_str());
 
     // check cache
     struct extension_t resolvedExtension;
@@ -344,7 +346,7 @@ theme_ptr theme_from_name(const std::string path, std::vector<struct extension_t
 {
     std::string theme_path = path;
 
-    app_t::log("theme?: %s", path.c_str());
+    app_t::log("finding theme: %s", path.c_str());
 
     bool found = false;
     for (auto ext : extensions) {
@@ -359,7 +361,7 @@ theme_ptr theme_from_name(const std::string path, std::vector<struct extension_t
         for (int i = 0; i < themes.size(); i++) {
             Json::Value theme = themes[i];
 
-            app_t::log("theme >> %s", theme["id"].asString().c_str(), theme["label"].asString().c_str());
+            // app_t::log("theme >> %s", theme["id"].asString().c_str(), theme["label"].asString().c_str());
 
             if (theme["id"].asString() == theme_path || theme["label"].asString() == theme_path) {
                 theme_path = ext.path + "/" + theme["path"].asString();

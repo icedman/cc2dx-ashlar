@@ -84,7 +84,7 @@ void highlighter_t::highlightBlock(block_ptr block)
         return;
     }
 
-    app_t::instance()->log("highlight %d", block->lineNumber);
+    // app_t::instance()->log("highlight %d", block->lineNumber);
 
     struct blockdata_t* blockData = block->data.get();
 
