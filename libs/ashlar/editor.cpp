@@ -11,6 +11,15 @@
 // beyond this threshold, paste will use an additional file buffer
 #define SIMPLE_PASTE_THRESHOLD 20000
 
+bool _isLineWrap()
+{
+    #if defined(__ANDROID__)
+    return false;
+    #else
+    return app_t::instance()->lineWrap;
+    #endif
+}
+
 editor_t::editor_t()
     : view_t("editor")
 {
@@ -104,8 +113,8 @@ void editor_t::runOp(operation_t op)
     case OPEN:
         document.open(strParam, false);
         createSnapshot();
-        highlighter.run(this);
-        completer.run(this);
+        // highlighter.run(this);
+        // completer.run(this);
         return;
     case SAVE: {
         if (document.fileName == "") {
@@ -952,7 +961,7 @@ void editor_t::ensureVisibleCursor()
     int lookAheadX = (cols / 3);
 
     int adjust = 0;
-    if (app_t::instance()->lineWrap) {
+    if (_isLineWrap()) {
         block_list::iterator it = document.blocks.begin();
         if (scrollY > document.blocks.size()) scrollY = document.blocks.size() - 1;
         if (scrollY > 0) {
@@ -997,7 +1006,7 @@ void editor_t::ensureVisibleCursor()
         scrollX = -(cols - screenX) + 2;
     }
 
-    if (app_t::instance()->lineWrap) {
+    if (_isLineWrap()) {
         scrollX = 0;
     }
 
@@ -1065,6 +1074,8 @@ void editor_t::render()
 
     _foldedLines = 0;
 
+    _editorBegin();
+
     bool hlMainCursor = document.cursors.size() == 1 && !mainCursor.hasSelection();
     bool firstLine = true;
     while (it != document.blocks.end()) {
@@ -1082,6 +1093,7 @@ void editor_t::render()
         std::string text = b->text() + " ";
 
         char* line = (char*)text.c_str();
+        _editorLine();
         for (int sl = 0; sl < b->lineCount; sl++) {
             _move(l, 0);
             _clrtoeol(cols);
@@ -1182,6 +1194,8 @@ void editor_t::render()
             }
         }
     }
+
+    _editorEnd();
 
     while (l < rows) {
         _move(l, 0);

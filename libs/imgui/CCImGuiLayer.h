@@ -1,30 +1,12 @@
 #pragma once
-
-#include "cocos2d.h"
-
-USING_NS_CC;
-
-class ImGuiLayer : public cocos2d::Layer
+#include <cocos2d.h>
+class ImGuiLayer : public cocos2d::Node
 {
 public:
-    bool detached = false;
-
-    static void createAndKeepOnTop();
-    
-    // Here's a difference. Method 'init' in cocos2d-x returns bool, instead of returning 'id' in cocos2d-iphone
+    static ImGuiLayer* create();
     virtual bool init() override;
-
-    virtual void visit(Renderer *renderer, const Mat4& parentTransform, uint32_t parentFlags) override;
-
+    virtual void visit(cocos2d::Renderer *renderer, const cocos2d::Mat4& parentTransform, uint32_t parentFlags) override;
     void onDraw();
-
-    // implement the "static create()" method manually
-    CREATE_FUNC(ImGuiLayer);
-
 private:
-#if COCOS2D_VERSION < 0x00040000
-    CustomCommand _command;
-#else
-    CallbackCommand _command;
-#endif
+    cocos2d::CustomCommand _command;
 };

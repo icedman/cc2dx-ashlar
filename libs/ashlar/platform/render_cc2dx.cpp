@@ -2,6 +2,7 @@
 #include "dots.h"
 #include "render.h"
 #include "util.h"
+#include "imgui.h"
 
 static view_list contextStack;
 
@@ -37,16 +38,11 @@ struct RGB {
     unsigned short r;
 };
 
+static bool inEditor = false;
+static int inEditorLine = 0;
+
 static RGB drawColor;
 static RGB drawBg;
-
-#define screenWidth 80 
-#define screenHeight 50
-
-#define SCREEN_DATA_SIZE (screenWidth * screenHeight)
-char _screenData[SCREEN_DATA_SIZE];
-RGB _screenFg[SCREEN_DATA_SIZE];
-RGB _screenBg[SCREEN_DATA_SIZE];
 
 static std::map<int, BgFg> colorPairs;
 
@@ -69,13 +65,6 @@ static view_t* context()
 
 void _clrtoeol(int w)
 {
-    if (drawY >= screenHeight) return;
-    if (w > screenWidth) w = screenWidth;
-
-    char *target = _screenData;
-    target += (drawY * screenWidth);
-    memset(target, 0, w * sizeof(char));
-
     dirtyScreen = true;
 }
 
@@ -85,20 +74,30 @@ void _move(int y, int x)
     drawY = y;
 }
 
+std::string tmpEditorText;
+RGB currentColor;
+
+void _imguiFlushText() {
+    if (tmpEditorText.size() > 200) {
+        tmpEditorText = "";
+    }
+
+    ImGui::TextColored(ImVec4(
+            (float)currentColor.r/255.0f,
+            (float)currentColor.g/255.0f,
+            (float)currentColor.b/255.0f,1.0f), 
+        "%s",
+        (const char*)tmpEditorText.c_str());
+
+    ImGui::SameLine(0, 0);
+    tmpEditorText = "";
+}
+
 void _addch(char c)
 {
-    int xx = (drawX + drawBaseX);
-    int yy = (drawY + drawBaseY);
-
-    // app_t::log("%d %d %c", xx, yy, c);
-
-    if (xx >= screenWidth || yy >= screenHeight) return;
-    _screenData[yy * screenWidth + xx] = c;
-
-    _screenBg[yy * screenWidth + xx] = drawBg;
-    _screenFg[yy * screenWidth + xx] = drawColor;
-
-    drawX ++;
+    if (inEditor) {
+        tmpEditorText += c;
+    }
 
     dirtyScreen = true;
 }
@@ -130,8 +129,7 @@ void _attroff(int attr)
 
 int _color_pair(int pair)
 {
-    drawColorPair = pair;
-    BgFg bgFg = colorPairs[drawColorPair];
+    BgFg bgFg = colorPairs[pair];
 
     RGB color = {
         .b = (uint8_t)bgFg.fg.blue,
@@ -147,6 +145,11 @@ int _color_pair(int pair)
     };
     drawBg = bg;
 
+    if (color.r != currentColor.r && color.g != currentColor.g && color.b != currentColor.b) {
+        _imguiFlushText();
+        currentColor = color;
+    }
+    drawColorPair = pair;
     return drawColorPair;
 }
 
@@ -211,13 +214,8 @@ void render_t::initialize()
 {
     drawX = 0;
     drawY = 0;
-    width = screenWidth;
-    height = screenHeight;
     fw = 1;
     fh = 1;
-    memset(_screenData, 0, sizeof(int) * SCREEN_DATA_SIZE);
-    memset(_screenFg, 0, sizeof(RGB) * SCREEN_DATA_SIZE);
-    memset(_screenBg, 0, sizeof(RGB) * SCREEN_DATA_SIZE);
 }
 
 void render_t::shutdown()
@@ -297,7 +295,7 @@ void render_t::delay(int ms)
 
 bool render_t::isTerminal()
 {
-    return true;
+    return false;
 }
 
 int _keyMods()
@@ -317,10 +315,33 @@ bool isScreenDirty() {
 
 void* getScreenColor()
 {
-    return (void*)&_screenFg;
+    return NULL;
 }
 
 char* getScreenData()
 {
-    return _screenData;
+    return NULL;
+}
+
+void _editorBegin() {
+    inEditor = true;
+    inEditorLine = 0;
+    currentColor = drawColor;
+    tmpEditorText = "";
+}
+
+void _editorLine() {
+    _imguiFlushText();
+    ImGui::Text("");
+    inEditorLine++;
+}
+
+void _editorEnd() {
+    _imguiFlushText();
+    ImGui::Text("");
+    inEditor = false;
+
+    currentColor.r = 255;
+    currentColor.g = 255;
+    currentColor.b = 255;
 }

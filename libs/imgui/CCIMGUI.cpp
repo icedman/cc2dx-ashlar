@@ -1,312 +1,239 @@
-/**
- * https://github.com/namkazt/cocos2d-x-ImGui
- */
-
 #include "CCIMGUI.h"
-#include "imgui_impl_cocos2dx.h"
-
-USING_NS_CC;
-static CCIMGUI* _instance = NULL;
-//================================================
-// style editor variables
-static int hue = 140;
-static float col_main_sat = 180.f / 255.f;
-static float col_main_val = 161.f / 255.f;
-static float col_area_sat = 124.f / 255.f;
-static float col_area_val = 100.f / 255.f;
-static float col_back_sat = 59.f / 255.f;
-static float col_back_val = 40.f / 255.f;
-
-CCIMGUI* CCIMGUI::getInstance()
-{
-	if(_instance == NULL)
-	{
-		_instance = new (std::nothrow) CCIMGUI();
-		_instance->init();
-	}
-	return _instance;
-}
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+using namespace cocos2d;
+static CCIMGUI* _instance = nullptr;
+#define IMGUI_GLOBAL_SCALE 3.0f
 
 void CCIMGUI::init()
 {
-    ImGui_ImplCocos2dx_Init(true);
-#if 1
-	_callPiplines["styleEditor"] = std::bind(&CCIMGUI::displaySetupStyle, this);
-	ImGuiStyle& style = ImGui::GetStyle();
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+//    ImGuiIO &io = ImGui::GetIO();
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
-	ImVec4 col_text = ImColor::HSV(hue / 255.f, 20.f / 255.f, 235.f / 255.f);
-	ImVec4 col_main = ImColor::HSV(hue / 255.f, col_main_sat, col_main_val);
-	ImVec4 col_back = ImColor::HSV(hue / 255.f, col_back_sat, col_back_val);
-	ImVec4 col_area = ImColor::HSV(hue / 255.f, col_area_sat, col_area_val);
-//	style.WindowFillAlphaDefault = 0.98f;
-    style.Alpha = 0.98f;
-	style.Colors[ImGuiCol_Text] = ImVec4(col_text.x, col_text.y, col_text.z, 1.00f);
-	style.Colors[ImGuiCol_TextDisabled] = ImVec4(col_text.x, col_text.y, col_text.z, 0.58f);
-	style.Colors[ImGuiCol_WindowBg] = ImVec4(col_back.x, col_back.y, col_back.z, 1.00f);
-	style.Colors[ImGuiCol_ChildBg] = ImVec4(col_area.x, col_area.y, col_area.z, 0.00f);
-	style.Colors[ImGuiCol_Border] = ImVec4(col_text.x, col_text.y, col_text.z, 0.30f);
-	style.Colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-	style.Colors[ImGuiCol_FrameBg] = ImVec4(col_area.x, col_area.y, col_area.z, 1.00f);
-	style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(col_main.x, col_main.y, col_main.z, 0.68f);
-	style.Colors[ImGuiCol_FrameBgActive] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-	style.Colors[ImGuiCol_TitleBg] = ImVec4(col_main.x, col_main.y, col_main.z, 0.45f);
-	style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(col_main.x, col_main.y, col_main.z, 0.35f);
-	style.Colors[ImGuiCol_TitleBgActive] = ImVec4(col_main.x, col_main.y, col_main.z, 0.78f);
-	style.Colors[ImGuiCol_MenuBarBg] = ImVec4(col_area.x, col_area.y, col_area.z, 0.57f);
-	style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(col_area.x, col_area.y, col_area.z, 1.00f);
-	style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(col_main.x, col_main.y, col_main.z, 0.31f);
-	style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(col_main.x, col_main.y, col_main.z, 0.78f);
-	style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-	style.Colors[ImGuiCol_CheckMark] = ImVec4(col_main.x, col_main.y, col_main.z, 0.80f);
-	style.Colors[ImGuiCol_SliderGrab] = ImVec4(col_main.x, col_main.y, col_main.z, 0.24f);
-	style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-	style.Colors[ImGuiCol_Button] = ImVec4(col_main.x, col_main.y, col_main.z, 0.44f);
-	style.Colors[ImGuiCol_ButtonHovered] = ImVec4(col_main.x, col_main.y, col_main.z, 0.86f);
-	style.Colors[ImGuiCol_ButtonActive] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-	style.Colors[ImGuiCol_Header] = ImVec4(col_main.x, col_main.y, col_main.z, 0.76f);
-	style.Colors[ImGuiCol_HeaderHovered] = ImVec4(col_main.x, col_main.y, col_main.z, 0.86f);
-	style.Colors[ImGuiCol_HeaderActive] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-	style.Colors[ImGuiCol_Separator] = ImVec4(col_text.x, col_text.y, col_text.z, 0.32f);
-	style.Colors[ImGuiCol_SeparatorHovered] = ImVec4(col_text.x, col_text.y, col_text.z, 0.78f);
-	style.Colors[ImGuiCol_SeparatorActive] = ImVec4(col_text.x, col_text.y, col_text.z, 1.00f);
-	style.Colors[ImGuiCol_ResizeGrip] = ImVec4(col_main.x, col_main.y, col_main.z, 0.20f);
-	style.Colors[ImGuiCol_ResizeGripHovered] = ImVec4(col_main.x, col_main.y, col_main.z, 0.78f);
-	style.Colors[ImGuiCol_ResizeGripActive] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-	style.Colors[ImGuiCol_PlotLines] = ImVec4(col_text.x, col_text.y, col_text.z, 0.63f);
-	style.Colors[ImGuiCol_PlotLinesHovered] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-	style.Colors[ImGuiCol_PlotHistogram] = ImVec4(col_text.x, col_text.y, col_text.z, 0.63f);
-	style.Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-	style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(col_main.x, col_main.y, col_main.z, 0.43f);
-//	style.Colors[ImGuiCol_TooltipBg] = ImVec4(col_main.x, col_main.y, col_main.z, 0.92f);
-	style.Colors[ImGuiCol_ModalWindowDarkening] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
+    // Setup Platform/Renderer bindings
+    ImGui_ImplGlfw_Init(true);
+    ImGui_ImplOpenGL3_Init();
+
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS) || (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(IMGUI_GLOBAL_SCALE);
+    ImGuiIO &io = ImGui::GetIO();
+    io.FontGlobalScale = IMGUI_GLOBAL_SCALE;
 #endif
 }
 
-void CCIMGUI::updateImGUI()
+CCIMGUI* CCIMGUI::getInstance()
 {
+    if(_instance == nullptr)
+    {
+        _instance = new (std::nothrow) CCIMGUI();
+        _instance->init();
+    }
+    return _instance;
+}
+
+void CCIMGUI::cleanup()
+{
+    if(_instance != nullptr)
+    {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplGlfw_Shutdown();
+        ImGui::DestroyContext();
+    }
+}
+
+void CCIMGUI::update()
+{
+    // clear things from last frame
     _usedTextureIdMap.clear();
-
-	auto iter = _callPiplines.begin();
-	for (; iter != _callPiplines.end(); ++iter)
-	{
-		iter->second();
-	}
-}
-
-void CCIMGUI::removeImGUI(const std::string& name)
-{
-	auto iter = _callPiplines.find(name);
-	if (iter != _callPiplines.end())
-		_callPiplines.erase(iter);
-}
-
-void CCIMGUI::setValue(bool value, const std::string& uid)
-{
-    if (_values.find(uid) == _values.end()) {
-        _values[uid] = new (std::nothrow)CCImValue(value);
-    } else {
-        _values[uid]->setValue(value);
+    _usedCCTextureIdMap.clear();
+    _usedCCSpriteIdMap.clear();
+    _usedCCTexture.clear();
+    _usedCCSprite.clear();
+    // drawing commands
+    auto iter = _callPiplines.begin();
+    for (; iter != _callPiplines.end(); ++iter)
+    {
+        iter->second();
     }
+    // commands will be processed after update
 }
 
-void CCIMGUI::setValue(int value, const std::string& uid)
+void CCIMGUI::addCallback(const std::function<void()>& callBack, const std::string& name)
 {
-    if (_values.find(uid) == _values.end()) {
-        _values[uid] = new (std::nothrow)CCImValue(value);
-    } else {
-        _values[uid]->setValue(value);
-    }
+    _callPiplines[name] = callBack;
 }
 
-CCImValue* CCIMGUI::getValue(const std::string& uid)
+void CCIMGUI::removeCallback(const std::string& name)
 {
-	return _values[uid];
+    const auto iter = _callPiplines.find(name);
+    if (iter != _callPiplines.end())
+        _callPiplines.erase(iter);
 }
 
-void CCIMGUI::removeValue(const std::string& uid)
+static std::tuple<ImVec2, ImVec2> getTextureUV(cocos2d::Sprite* sp)
 {
-	_values.erase(uid);
+    ImVec2 uv0, uv1;
+    if (!sp || !sp->getTexture())
+        return { uv0,uv1 };
+    const auto rect = sp->getTextureRect();
+    const auto tex = sp->getTexture();
+    const float atlasWidth = (float)tex->getPixelsWide();
+    const float atlasHeight = (float)tex->getPixelsHigh();
+    uv0.x = rect.origin.x / atlasWidth;
+    uv0.y = rect.origin.y / atlasHeight;
+    uv1.x = (rect.origin.x + rect.size.width) / atlasWidth;
+    uv1.y = (rect.origin.y + rect.size.height) / atlasHeight;
+    return { uv0,uv1 };
 }
 
-#include <tuple>
-static std::tuple<Texture2D*, ImVec2, ImVec2, ImVec2> getTextureInfo(const std::string& fn, int w = -1, int h = -1) {
-    std::string name = fn;
-    cocos2d::Texture2D *texture = NULL;
-    ImVec2 uv0(0, 0);
-    ImVec2 uv1(1, 1);
-    ImVec2 size(0, 0);
-
-    // sprite frame
-    if (fn.at(0) == '#') {
-        name = name.substr(1, name.size());
-        SpriteFrame *sf = cocos2d::SpriteFrameCache::getInstance()->getSpriteFrameByName(name);
-        if (sf) {
-            float atlasWidth = (float)sf->getTexture()->getPixelsWide();
-            float atlasHeight = (float)sf->getTexture()->getPixelsHigh();
-
-            const Rect& rect = sf->getRect();
-            texture = sf->getTexture();
-            if (sf->isRotated()) {
-                // FIXME:
-                uv0.x = rect.origin.x / atlasWidth;
-                uv0.y = rect.origin.y / atlasHeight;
-                uv1.x = (rect.origin.x + rect.size.width) / atlasWidth;
-                uv1.y = (rect.origin.y + rect.size.height) / atlasHeight;
-            } else {
-                uv0.x = rect.origin.x / atlasWidth;
-                uv0.y = rect.origin.y / atlasHeight;
-                uv1.x = (rect.origin.x + rect.size.width) / atlasWidth;
-                uv1.y = (rect.origin.y + rect.size.height) / atlasHeight;
-            }
-
-            size.x = sf->getRect().size.width;
-            size.y = sf->getRect().size.height;
-        }
-    } else {
-        texture = cocos2d::Director::getInstance()->getTextureCache()->addImage(fn);
-        size.x = texture->getPixelsWide();
-        size.y = texture->getPixelsHigh();
-    }
-
-    if (w > 0 && h > 0) {
-        size.x = w;
-        size.y = h;
-    }
-
-    return std::make_tuple(texture, size, uv0, uv1);
-}
-
-void CCIMGUI::image(const std::string& fn, int w, int h)
+void CCIMGUI::image(cocos2d::Texture2D* tex, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1, const ImVec4& tint_col,
+    const ImVec4& border_col)
 {
-    cocos2d::Texture2D *texture = NULL;
-    ImVec2 uv0(0, 0);
-    ImVec2 uv1(1, 1);
-    ImVec2 size(0, 0);
-
-    std::tie(texture, size, uv0, uv1) = getTextureInfo(fn, w, h);
-    if (texture) {
-        bool needToPopID = false;
-#if !defined(EGNX_VERSION)
-        GLuint texId = texture->_ID; // TODO texture->getName();
-#else
-        GLuint texId = texture->getBackendTexture()->getGPUHandler();
-#endif
-        if (_usedTextureIdMap.find(texId) == _usedTextureIdMap.end()) {
-            _usedTextureIdMap[texId] = 0;
-        } else {
-            _usedTextureIdMap[texId]++;
-            ImGui::PushID(_usedTextureIdMap[texId]);
-            needToPopID = true;
-        }
-
-        ImGui::Image((ImTextureID)texId, size, uv0, uv1);
-
-        if (needToPopID) {
-            ImGui::PopID();
-        }
+    if (!tex)
+        return;
+    auto size_ = size;
+    if (size_.x <= 0.f) size_.x = tex->getPixelsWide();
+    if (size_.y <= 0.f) size_.y = tex->getPixelsHigh();
+    int id = 0;
+    const auto it = _usedCCTextureIdMap.find(tex);
+    if (it == _usedCCTextureIdMap.end())
+    {
+        _usedCCTextureIdMap[tex] = 0;
+        _usedCCTexture.pushBack(tex);
     }
+    else
+        id = ++it->second;
+    ImGui::PushID(id);
+    ImGui::Image((ImTextureID)(intptr_t)tex->getName(), size_, uv0, uv1, tint_col, border_col);
+    ImGui::PopID();
 }
-bool CCIMGUI::imageButton(const std::string& fn, int w, int h)
+
+void CCIMGUI::image(cocos2d::Sprite* sprite, const ImVec2& size, const ImVec4& tint_col, const ImVec4& border_col)
 {
-    cocos2d::Texture2D *texture = NULL;
-    ImVec2 uv0(0, 0);
-    ImVec2 uv1(1, 1);
-    ImVec2 size(0, 0);
-
-    bool ret = false;
-    std::tie(texture, size, uv0, uv1) = getTextureInfo(fn, w, h);
-    if (texture) {
-        bool needToPopID = false;
-#if !defined(EGNX_VERSION)
-        GLuint texId = texture->_ID; // TODO  texture->getName();
-#else
-        GLuint texId = texture->getBackendTexture()->getGPUHandler();
-#endif
-        if (_usedTextureIdMap.find(texId) == _usedTextureIdMap.end()) {
-            _usedTextureIdMap[texId] = 0;
-        } else {
-            _usedTextureIdMap[texId]++;
-            ImGui::PushID(_usedTextureIdMap[texId]);
-            needToPopID = true;
-        }
-        
-        ret = ImGui::ImageButton((ImTextureID)texId, size, uv0, uv1);
-
-        if (needToPopID) {
-            ImGui::PopID();
-        }
+    if (!sprite || !sprite->getTexture())
+        return;
+    auto size_ = size;
+    const auto rect = sprite->getTextureRect();
+    if (size_.x <= 0.f) size_.x = rect.size.width;
+    if (size_.y <= 0.f) size_.y = rect.size.height;
+    ImVec2 uv0, uv1;
+    std::tie(uv0, uv1) = getTextureUV(sprite);
+    int id = 0;
+    const auto it = _usedCCSpriteIdMap.find(sprite);
+    if (it == _usedCCSpriteIdMap.end())
+    {
+        _usedCCSpriteIdMap[sprite] = 0;
+        _usedCCSprite.pushBack(sprite);
     }
+    else
+        id = ++it->second;
+    ImGui::PushID(id);
+    ImGui::Image((ImTextureID)(intptr_t)sprite->getTexture()->getName(), size_, uv0, uv1, tint_col, border_col);
+    ImGui::PopID();
+}
+
+bool CCIMGUI::imageButton(cocos2d::Texture2D* tex, const ImVec2& size, const ImVec2& uv0, const ImVec2& uv1,
+    int frame_padding, const ImVec4& bg_col, const ImVec4& tint_col)
+{
+    if (!tex)
+        return false;
+    auto size_ = size;
+    if (size_.x <= 0.f) size_.x = tex->getPixelsWide();
+    if (size_.y <= 0.f) size_.y = tex->getPixelsHigh();
+    int id = 0;
+    const auto it = _usedCCTextureIdMap.find(tex);
+    if (it == _usedCCTextureIdMap.end())
+    {
+        _usedCCTextureIdMap[tex] = 0;
+        _usedCCTexture.pushBack(tex);
+    }
+    else
+        id = ++it->second;
+    ImGui::PushID(id);
+    const auto ret = ImGui::ImageButton((ImTextureID)(intptr_t)tex->getName(),
+        size_, uv0, uv1, frame_padding, bg_col, tint_col);
+    ImGui::PopID();
     return ret;
 }
 
-void CCIMGUI::displaySetupStyle()
+bool CCIMGUI::imageButton(cocos2d::Sprite* sprite, const ImVec2& size, int frame_padding, const ImVec4& bg_col,
+    const ImVec4& tint_col)
 {
-	if (isShowSetupStyle) {
-		ImGui::Begin("Hue Style", &isShowSetupStyle);
-		ImGui::SliderInt("master hue", &hue, 0, 255);
+    if (!sprite || !sprite->getTexture())
+        return false;
+    auto size_ = size;
+    const auto rect = sprite->getTextureRect();
+    if (size_.x <= 0.f) size_.x = rect.size.width;
+    if (size_.y <= 0.f) size_.y = rect.size.height;
+    ImVec2 uv0, uv1;
+    std::tie(uv0, uv1) = getTextureUV(sprite);
+    int id = 0;
+    const auto it = _usedCCSpriteIdMap.find(sprite);
+    if (it == _usedCCSpriteIdMap.end())
+    {
+        _usedCCSpriteIdMap[sprite] = 0;
+        _usedCCSprite.pushBack(sprite);
+    }
+    else
+        id = ++it->second;
+    ImGui::PushID(id);
+    const auto ret = ImGui::ImageButton((ImTextureID)(intptr_t)sprite->getTexture()->getName(),
+        size_, uv0, uv1, frame_padding, bg_col, tint_col);
+    ImGui::PopID();
+    return ret;
+}
 
-		float dummy;
-		ImVec4 rgb;
+std::tuple<ImTextureID, int> CCIMGUI::useTexture(cocos2d::Texture2D* texture)
+{
+    if (!texture)
+        return { nullptr,0 };
+    int id = 0;
+    const auto it = _usedCCTextureIdMap.find(texture);
+    if (it == _usedCCTextureIdMap.end())
+    {
+        _usedCCTextureIdMap[texture] = 0;
+        _usedCCTexture.pushBack(texture);
+    }
+    else
+        id = ++it->second;
+    return { (ImTextureID)(intptr_t)texture->getName(),id };
+}
 
-		ImGui::ColorConvertHSVtoRGB(hue / 255.f, col_main_sat, col_main_val, rgb.x, rgb.y, rgb.z);
-		ImGui::ColorEdit3("main", &rgb.x);
-		ImGui::ColorConvertRGBtoHSV(rgb.x, rgb.y, rgb.z, dummy, col_main_sat, col_main_val);
+std::tuple<ImTextureID, ImVec2, ImVec2, int> CCIMGUI::useSprite(cocos2d::Sprite* sprite)
+{
+    if (!sprite || !sprite->getTexture())
+        return { nullptr,{},{},0 };
+    int id = 0;
+    const auto it = _usedCCSpriteIdMap.find(sprite);
+    if (it == _usedCCSpriteIdMap.end())
+    {
+        _usedCCSpriteIdMap[sprite] = 0;
+        _usedCCSprite.pushBack(sprite);
+    }
+    else
+        id = ++it->second;
+    ImVec2 uv0, uv1;
+    std::tie(uv0, uv1) = getTextureUV(sprite);
+    return { (ImTextureID)(intptr_t)sprite->getTexture()->getName(),uv0,uv1,id };
+}
 
-		ImGui::ColorConvertHSVtoRGB(hue / 255.f, col_area_sat, col_area_val, rgb.x, rgb.y, rgb.z);
-		ImGui::ColorEdit3("area", &rgb.x);
-		ImGui::ColorConvertRGBtoHSV(rgb.x, rgb.y, rgb.z, dummy, col_area_sat, col_area_val);
-
-		ImGui::ColorConvertHSVtoRGB(hue / 255.f, col_back_sat, col_back_val, rgb.x, rgb.y, rgb.z);
-		ImGui::ColorEdit3("back", &rgb.x);
-		ImGui::ColorConvertRGBtoHSV(rgb.x, rgb.y, rgb.z, dummy, col_back_sat, col_back_val);
-
-		ImGui::End();
-
-		ImGuiStyle& style = ImGui::GetStyle();
-
-		ImVec4 col_text = ImColor::HSV(hue / 255.f, 20.f / 255.f, 235.f / 255.f);
-		ImVec4 col_main = ImColor::HSV(hue / 255.f, col_main_sat, col_main_val);
-		ImVec4 col_back = ImColor::HSV(hue / 255.f, col_back_sat, col_back_val);
-		ImVec4 col_area = ImColor::HSV(hue / 255.f, col_area_sat, col_area_val);
-		style.Alpha = 1.0f;
-		style.Colors[ImGuiCol_Text] = ImVec4(col_text.x, col_text.y, col_text.z, 1.00f);
-		style.Colors[ImGuiCol_TextDisabled] = ImVec4(col_text.x, col_text.y, col_text.z, 0.58f);
-		style.Colors[ImGuiCol_WindowBg] = ImVec4(col_back.x, col_back.y, col_back.z, 1.00f);
-		style.Colors[ImGuiCol_ChildBg] = ImVec4(col_area.x, col_area.y, col_area.z, 0.00f);
-		style.Colors[ImGuiCol_Border] = ImVec4(col_text.x, col_text.y, col_text.z, 0.30f);
-		style.Colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-		style.Colors[ImGuiCol_FrameBg] = ImVec4(col_area.x, col_area.y, col_area.z, 1.00f);
-		style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(col_main.x, col_main.y, col_main.z, 0.68f);
-		style.Colors[ImGuiCol_FrameBgActive] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-		style.Colors[ImGuiCol_TitleBg] = ImVec4(col_main.x, col_main.y, col_main.z, 0.45f);
-		style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(col_main.x, col_main.y, col_main.z, 0.35f);
-		style.Colors[ImGuiCol_TitleBgActive] = ImVec4(col_main.x, col_main.y, col_main.z, 0.78f);
-		style.Colors[ImGuiCol_MenuBarBg] = ImVec4(col_area.x, col_area.y, col_area.z, 0.57f);
-		style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(col_area.x, col_area.y, col_area.z, 1.00f);
-		style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(col_main.x, col_main.y, col_main.z, 0.31f);
-		style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(col_main.x, col_main.y, col_main.z, 0.78f);
-		style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-		style.Colors[ImGuiCol_CheckMark] = ImVec4(col_main.x, col_main.y, col_main.z, 0.80f);
-		style.Colors[ImGuiCol_SliderGrab] = ImVec4(col_main.x, col_main.y, col_main.z, 0.24f);
-		style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-		style.Colors[ImGuiCol_Button] = ImVec4(col_main.x, col_main.y, col_main.z, 0.44f);
-		style.Colors[ImGuiCol_ButtonHovered] = ImVec4(col_main.x, col_main.y, col_main.z, 0.86f);
-		style.Colors[ImGuiCol_ButtonActive] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-		style.Colors[ImGuiCol_Header] = ImVec4(col_main.x, col_main.y, col_main.z, 0.76f);
-		style.Colors[ImGuiCol_HeaderHovered] = ImVec4(col_main.x, col_main.y, col_main.z, 0.86f);
-		style.Colors[ImGuiCol_HeaderActive] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-		style.Colors[ImGuiCol_Separator] = ImVec4(col_text.x, col_text.y, col_text.z, 0.32f);
-		style.Colors[ImGuiCol_SeparatorHovered] = ImVec4(col_text.x, col_text.y, col_text.z, 0.78f);
-		style.Colors[ImGuiCol_SeparatorActive] = ImVec4(col_text.x, col_text.y, col_text.z, 1.00f);
-		style.Colors[ImGuiCol_ResizeGrip] = ImVec4(col_main.x, col_main.y, col_main.z, 0.20f);
-		style.Colors[ImGuiCol_ResizeGripHovered] = ImVec4(col_main.x, col_main.y, col_main.z, 0.78f);
-		style.Colors[ImGuiCol_ResizeGripActive] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-		style.Colors[ImGuiCol_PlotLines] = ImVec4(col_text.x, col_text.y, col_text.z, 0.63f);
-		style.Colors[ImGuiCol_PlotLinesHovered] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-		style.Colors[ImGuiCol_PlotHistogram] = ImVec4(col_text.x, col_text.y, col_text.z, 0.63f);
-		style.Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(col_main.x, col_main.y, col_main.z, 1.00f);
-		style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(col_main.x, col_main.y, col_main.z, 0.43f);
-		style.Colors[ImGuiCol_PopupBg] = ImVec4(col_main.x, col_main.y, col_main.z, 0.92f);
-		style.Colors[ImGuiCol_ModalWindowDarkening] = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
-	}
+ImWchar* CCIMGUI::addGlyphRanges(const std::string& key, const std::vector<ImWchar>& ranges)
+{
+    auto it = glyphRanges.find(key);
+    // the pointer must be persistant, do not replace
+    if (it != glyphRanges.end())
+        return it->second.data();
+    glyphRanges[key] = ranges;
+    if (ranges.empty())
+        glyphRanges[key].push_back(0);
+    return glyphRanges[key].data();
 }

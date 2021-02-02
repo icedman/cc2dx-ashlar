@@ -218,3 +218,7 @@ int _keyMods()
 {
     return 0;
 }
+
+void _editorBegin() {}
+void _ditorLine() {}
+void _editorEnd() {}

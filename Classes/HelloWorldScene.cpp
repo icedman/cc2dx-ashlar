@@ -23,6 +23,10 @@
  ****************************************************************************/
 
 #include "HelloWorldScene.h"
+#include "SimpleAudioEngine.h"
+
+#include "CCIMGUI.h"
+#include "CCImGuiLayer.h"
 
 #include "app.h"
 #include "editor.h"
@@ -43,6 +47,100 @@ typedef std::map<cocos2d::EventKeyboard::KeyCode,
 
 static key_press_map_t keyPressed;
 static key_press_map_t keyReleased;
+std::string text;
+
+static bool show_demo_window = true;
+static bool show_another_window = false;
+static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+static void imguiDemo(cocos2d::Size visibleSize)
+{
+    CCIMGUI::getInstance()->addCallback([=](){
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | 
+            ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoBackground |
+            ImGuiWindowFlags_NoScrollbar |
+            ImGuiWindowFlags_NoCollapse;
+
+        ImGui::SetNextWindowSize(ImVec2(visibleSize.width, visibleSize.height), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+        ImGui::Begin("Hello, world!", NULL, window_flags);
+
+        ImGui::Checkbox("Demo Window", &show_demo_window);
+
+        app.update(100);
+        app.preLayout();
+        app.layout(0, 0, 80, 50);
+        app.preRender();
+
+        if (show_demo_window) {
+            app.render();
+            renderer.render();
+        } else {
+            ImGui::Text("hello");
+        }
+
+        ImGui::End();
+
+    }, "demoid");
+}
+
+static void imguiDemo2(cocos2d::Size visibleSize)
+{
+    CCIMGUI::getInstance()->addCallback([=](){
+    
+        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()!
+        // You can browse its code to learn more about Dear ImGui!).
+        if (show_demo_window)
+            ImGui::ShowDemoWindow(&show_demo_window);
+        
+        // 2. Show a simple window that we create ourselves.
+        // We use a Begin/End pair to created a named window.
+        {
+            static float f = 0.0f;
+            static int counter = 0;
+
+            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+            ImGui::Checkbox("Another Window", &show_another_window);
+
+            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                counter++;
+            ImGui::SameLine();
+            ImGui::Text("counter = %d", counter);
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
+        }
+
+        // 3. Show another simple window.
+        if (show_another_window)
+        {
+            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            ImGui::Text("Hello from another window!");
+            if (ImGui::Button("Close Me"))
+                show_another_window = false;
+            ImGui::End();
+        }
+    }, "demoid");
+}
+
+static void loadTTF() {
+    ImGuiIO &io = ImGui::GetIO();
+#if defined(__ANDROID__)
+    io.Fonts->AddFontFromFileTTF("/sdcard/.ashlar/fonts/monospace.ttf", 12.0f, 0, io.Fonts->GetGlyphRangesDefault());
+    // io.Fonts->AddFontFromFileTTF("/sdcard/.ashlar/fonts/FiraCode-Regular.ttf", 12.0f, 0, io.Fonts->GetGlyphRangesDefault());
+#else
+    // io.Fonts->AddFontFromFileTTF("/home/iceman/.ashlar/fonts/monospace.ttf", 22.0f, 0, io.Fonts->GetGlyphRangesDefault());
+    io.Fonts->AddFontFromFileTTF("/home/iceman/.ashlar/fonts/FiraCode-Regular.ttf", 22.0f, 0, io.Fonts->GetGlyphRangesDefault());
+#endif
+}
 
 USING_NS_CC;
 
@@ -68,9 +166,6 @@ bool HelloWorld::init()
         return false;
     }
 
-    auto visibleSize = Director::getInstance()->getVisibleSize();
-    Vec2 origin = Director::getInstance()->getVisibleOrigin();
-
     renderer.initialize();
     scripting.initialize();
     keybinding.initialize();
@@ -79,59 +174,42 @@ bool HelloWorld::init()
     app.setupColors();
     app.applyTheme();
 
+    auto visibleSize = Director::getInstance()->getVisibleSize();
+    Vec2 origin = Director::getInstance()->getVisibleOrigin();
+
     // editor
 #if defined(__ANDROID__)
     char* file = "/sdcard/main.cpp";
 #else
-    char* file = "/home/iceman/Developer/textmate/tashlar/src/main.cpp";
+    char* file = "/home/iceman/Developer/tashlar/src/main.cpp";
 #endif
 
     app.openEditor(file);
     app.explorer.setRootFromFile(file);
+    app.update(100);
 
-    /////////////////////////////
-    // 2. add a menu item with "X" image, which is clicked to quit the program
-    //    you may modify it.
+    imguiDemo(visibleSize);
+    loadTTF();
+    addChild(ImGuiLayer::create());
 
-    // add a "close" icon to exit the progress. it's an autorelease object
-    auto closeItem = MenuItemImage::create(
-                                           "CloseNormal.png",
-                                           "CloseSelected.png",
-                                           CC_CALLBACK_1(HelloWorld::menuCloseCallback, this));
+    // auto closeItem = MenuItemImage::create(
+    //                                        "CloseNormal.png",
+    //                                        "CloseSelected.png",
+    //                                        CC_CALLBACK_1(HelloWorld::menuCloseCallback, this));
 
-    if (closeItem == nullptr ||
-        closeItem->getContentSize().width <= 0 ||
-        closeItem->getContentSize().height <= 0)
-    {
-        problemLoading("'CloseNormal.png' and 'CloseSelected.png'");
-    }
-    else
-    {
-        float x = origin.x + visibleSize.width - closeItem->getContentSize().width/2;
-        float y = origin.y + closeItem->getContentSize().height/2;
-        closeItem->setPosition(Vec2(x,y));
-    }
-
-    // create menu, it's an autorelease object
-    auto menu = Menu::create(closeItem, NULL);
-    menu->setPosition(Vec2::ZERO);
-    this->addChild(menu, 1);
-
-    /////////////////////////////
-    // 3. add your codes below...
-
-    displayMap = new CursesTileMap();
-    if (!displayMap->initWithTMXFile("blank.tmx")) {
-        app_t::log("error loading tmx");
-    } else {
-        Size msz = displayMap->getMapSize();
-        Size tsz = displayMap->getTileSize();
-        app_t::log("map: %d %d %d %d", (int)msz.width, (int)msz.height, (int)tsz.width, (int)tsz.height);
-    }
-    displayMap->setTerminalSize(Size(80,50));
-    displayMap->setScale(3.0);
-    displayMap->positionAndScale(CursesTileMap::MapAlign::Center, CursesTileMap::MapAlign::Middle, 0);
-    this->addChild(displayMap);
+    // if (closeItem == nullptr ||
+    //     closeItem->getContentSize().width <= 0 ||
+    //     closeItem->getContentSize().height <= 0)
+    // {
+    //     problemLoading("'CloseNormal.png' and 'CloseSelected.png'");
+    // }
+    // else
+    // {
+    //     float x = origin.x + visibleSize.width - closeItem->getContentSize().width/2;
+    //     float y = origin.y + closeItem->getContentSize().height/2;
+    //     closeItem->setPosition(Vec2(x,y));
+    //     addChild(closeItem);
+    // }
 
     scheduleUpdate();
     // update(100);
@@ -150,8 +228,7 @@ bool HelloWorld::init()
         keyReleased[keyCode] = std::chrono::high_resolution_clock::now();
     };
 
-    this->_eventDispatcher->addEventListenerWithSceneGraphPriority(eventListener, displayMap);
-
+    this->_eventDispatcher->addEventListenerWithSceneGraphPriority(eventListener, this);
 
     return true;
 }
@@ -166,6 +243,7 @@ void HelloWorld::menuCloseCallback(Ref* pSender)
 
     //EventCustom customEndEvent("game_scene_close_event");
     //_eventDispatcher->dispatchEvent(&customEndEvent);
+    // app.input(0, "down");
 }
 
 void HelloWorld::update(float dt)
@@ -198,20 +276,15 @@ void HelloWorld::update(float dt)
         EventKeyboard::KeyCode key = it->first;
         char ch = (int)key - 124 + 'a';
         if (ch >= 'a' && ch <= 'z') {
+            if (ch == 'a') ch = '/';
+            if (ch == 'b') ch = '*';
             app.input(ch, "");
-            // app_t::log("press: %c", );
+            text += ch;
         }
+
+        // app_t::log("press: %c", ch);
     }
     keyReleased.clear();
 
     app.update(delta);
-    app.preLayout();
-    Size sz = displayMap->getMapSize();
-    app.layout(0, 0, sz.width - 2, sz.height - 2);
-    app.preRender();
-    app.render();
-
-    renderer.render();
-
-    displayMap->update(dt);
 }

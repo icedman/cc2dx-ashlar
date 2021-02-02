@@ -1,113 +1,55 @@
-/**
- * https://github.com/namkazt/cocos2d-x-ImGui
- */
 #pragma once
-
-#include "cocos2d.h"
+#include <cocos2d.h>
 #include "imgui.h"
-
-#define IMGUI_LUA 1
-
-USING_NS_CC;
-
-class CCImValue // as cocos2d::Value
-{
-public:
-    CCImValue();
-    explicit CCImValue(bool v):_type(Type::BOOLEAN) { setValue(v); };
-    explicit CCImValue(float v):_type(Type::FLOAT) { setValue(v); };
-    explicit CCImValue(int v):_type(Type::INTEGER) { setValue(v); };
-
-    // bool
-    void setValue(bool v) { _field.boolVal = v; };
-    bool asBool() { return _field.boolVal; };
-
-    // float
-    void setValue(float v) { _field.floatVal = v; };
-    float asFloat() { return _field.floatVal; };
-
-    // int
-    void setValue(int v) { _field.intVal = v; };
-    int asInt() { return _field.intVal; };
-
-    /** Value type wrapped by Value. */
-    enum class Type
-    {
-        /// no value is wrapped, an empty Value
-        NONE = 0,
-        /// wrap byte
-        BYTE,
-        /// wrap integer
-        INTEGER,
-        /// wrap float
-        FLOAT,
-        /// wrap double
-        DOUBLE,
-        /// wrap bool
-        BOOLEAN,
-        /// wrap string
-        STRING,
-        /// wrap vector
-        VECTOR,
-        /// wrap ValueMap
-        MAP,
-        /// wrap ValueMapIntKey
-        INT_KEY_MAP
-    };
-protected:
-    union
-    {
-        unsigned char byteVal;
-        int intVal;
-        float floatVal;
-        double doubleVal;
-        bool boolVal;
-
-        std::string* strVal;
-        ValueVector* vectorVal;
-        ValueMap* mapVal;
-        ValueMapIntKey* intKeyMapVal;
-    }_field;
-
-    Type _type;
-};
-
 class CCIMGUI
 {
+    void init();
 public:
-	static CCIMGUI* getInstance();
-	//-------------------------------------------------------
-	GLFWwindow* getWindow() { return _window; };
-	void setWindow(GLFWwindow* window) { _window = window; };
-	ImVec4 getClearColor() { return _clearColor; };
-	void setClearColor(ImColor color) { _clearColor = color; };
-	//-------------------------------------------------------
-	void init();
-	void updateImGUI();
-	void addImGUI(std::function<void()> imGUICall, const std::string& name) { _callPiplines[name] = imGUICall; };
-	void removeImGUI(const std::string& name);
-	//-------------------------------------------------------
-	void setValue(bool value, const std::string& uid);
-	void setValue(int value, const std::string& uid);
-	CCImValue* getValue(const std::string& uid);
-	void removeValue(const std::string& uid);
-	//-------------------------------------------------------
-	void setShowStyleEditor(bool show) { isShowSetupStyle = show; };
+    static CCIMGUI* getInstance();
+    static void cleanup();
+    void update();
+    void addCallback(const std::function<void()>& callBack, const std::string& name);
+    void removeCallback(const std::string& name);
 
-    // imgui helper
-    void image(const std::string& fn, int w = -1, int h = -1);
-    bool imageButton(const std::string& fn, int w = -1, int h = -1);
+    void image(
+        cocos2d::Texture2D* tex,
+        const ImVec2& size,
+        const ImVec2& uv0 = ImVec2(0, 0),
+        const ImVec2& uv1 = ImVec2(1, 1),
+        const ImVec4& tint_col = ImVec4(1, 1, 1, 1),
+        const ImVec4& border_col = ImVec4(0, 0, 0, 0));
+    void image(
+        cocos2d::Sprite* sprite,
+        const ImVec2& size,
+        const ImVec4& tint_col = ImVec4(1, 1, 1, 1),
+        const ImVec4& border_col = ImVec4(0, 0, 0, 0));
+    bool imageButton(
+        cocos2d::Texture2D* tex,
+        const ImVec2& size,
+        const ImVec2& uv0 = ImVec2(0, 0),
+        const ImVec2& uv1 = ImVec2(1, 1),
+        int frame_padding = -1,
+        const ImVec4& bg_col = ImVec4(0, 0, 0, 0),
+        const ImVec4& tint_col = ImVec4(1, 1, 1, 1));
+    bool imageButton(
+        cocos2d::Sprite* sprite,
+        const ImVec2& size,
+        int frame_padding = -1,
+        const ImVec4& bg_col = ImVec4(0, 0, 0, 0),
+        const ImVec4& tint_col = ImVec4(1, 1, 1, 1));
+    
+    std::tuple<ImTextureID, int> useTexture(cocos2d::Texture2D* texture);
+    std::tuple<ImTextureID, ImVec2, ImVec2, int> useSprite(cocos2d::Sprite* sprite);
 
+    ImWchar* addGlyphRanges(const std::string& key, const std::vector<ImWchar>& ranges);
 private:
-    bool isShowSetupStyle = false;
-    void displaySetupStyle();
-
-private:
-    GLFWwindow* _window = nullptr;
-    ImVec4 _clearColor = ImColor(114, 144, 154);
-
     std::unordered_map<std::string, std::function<void()>> _callPiplines;
-    std::unordered_map<std::string, CCImValue*> _values;
-
     std::unordered_map<unsigned int, int> _usedTextureIdMap;
+    std::unordered_map<cocos2d::Texture2D*, int> _usedCCTextureIdMap;
+    std::unordered_map<cocos2d::Sprite*, int> _usedCCSpriteIdMap;
+    // cocos objects should be retained until next frame
+    cocos2d::Vector<cocos2d::Texture2D*> _usedCCTexture;
+    cocos2d::Vector<cocos2d::Sprite*> _usedCCSprite;
+
+    std::unordered_map<std::string, std::vector<ImWchar>> glyphRanges;
 };

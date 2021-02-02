@@ -27,6 +27,7 @@
 #import "RootViewController.h"
 #import "cocos2d.h"
 #import "platform/ios/CCEAGLView-ios.h"
+#import "platform/ios/CCDirectorCaller-ios.h"
 
 
 @implementation RootViewController
@@ -68,6 +69,13 @@
     [super viewWillAppear:animated];
 }
 
+//In iOS 12.0+, Screen Time's bug cause UIApplicationDidBecomeActiveNotification and UIApplicationWillResignActiveNotification do not fired
+//so we need to active CCDirectorCaller manually
+-(void)viewDidAppear:(BOOL)animated{
+    [super viewDidAppear:animated];
+    [[CCDirectorCaller sharedDirectorCaller] setActive:YES];
+}
+
 - (void)viewDidDisappear:(BOOL)animated {
     [super viewDidDisappear:animated];
 }
@@ -107,8 +115,15 @@
 }
 
 // Controls the application's preferred home indicator auto-hiding when this view controller is shown.
+// (better use preferredScreenEdgesDeferringSystemGestures for controlling the home indicator)
 - (BOOL)prefersHomeIndicatorAutoHidden {
-    return YES;
+    return NO;
+}
+
+// HOME Indicator need to be tapped twice 
+-(UIRectEdge)preferredScreenEdgesDeferringSystemGestures
+{
+    return UIRectEdgeBottom; 
 }
 
 - (void)didReceiveMemoryWarning {

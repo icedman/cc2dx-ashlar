@@ -1,98 +1,59 @@
 #include "CCImGuiLayer.h"
 #include "imgui.h"
-#include "imgui_impl_cocos2dx.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include "CCIMGUI.h"
 
-USING_NS_CC;
-
-void ImGuiLayer::createAndKeepOnTop()
+ImGuiLayer* ImGuiLayer::create()
 {
-    // delay call, once.
-    auto director = Director::getInstance();
-    director->getScheduler()->schedule([=](float dt)
+    ImGuiLayer* pRet = new (std::nothrow) ImGuiLayer();
+    if (pRet && pRet->init())
     {
-        std::string layerName = "ImGUILayer";
-        auto order = INT_MAX;
-        auto layer = ImGuiLayer::create();
-        auto runningScene = Director::getInstance()->getRunningScene();
-        if (runningScene && !runningScene->getChildByName(layerName))
-        {
-           runningScene->addChild(layer, INT_MAX, layerName);
-        }
-        
-        auto e = Director::getInstance()->getEventDispatcher();
-        layer->detached = false;
-        e->addCustomEventListener(Director::EVENT_BEFORE_SET_NEXT_SCENE, [&, layerName](EventCustom*){
-            layer = dynamic_cast<ImGuiLayer*>(Director::getInstance()->getRunningScene()->getChildByName(layerName));
-            if (layer) {
-                layer->retain();
-                layer->removeFromParent();
-                layer->detached = true;
-            }
-        });
-        e->addCustomEventListener(Director::EVENT_AFTER_SET_NEXT_SCENE, [&, layer, layerName](EventCustom*){
-            if (layer && layer->detached) {
-                Director::getInstance()->getRunningScene()->addChild(layer, order, layerName);
-                layer->release();
-                layer->detached = false;
-            }
-        });
-    }, director, 0, 0, 0, false, "checkIMGUI");
+        pRet->autorelease();
+        return pRet;
+    }
+    CC_SAFE_DELETE(pRet);
+    return nullptr;
 }
 
-// on "init" you need to initialize your instance
 bool ImGuiLayer::init()
 {
-    //////////////////////////////
-    // 1. super init first
-    if ( !Layer::init() )
-    {
-        return false;
-    }
-	
-#if COCOS2D_VERSION < 0x00040000
-    // init imgui
-    setGLProgram(GLProgramCache::getInstance()->getGLProgram(GLProgram::SHADER_NAME_POSITION_COLOR));
-#endif
+    setGLProgram(cocos2d::GLProgramCache::getInstance()->getGLProgram(cocos2d::GLProgram::SHADER_NAME_POSITION_COLOR));
 
-	// events
-    auto listener = EventListenerTouchOneByOne::create();
+    // note: when at the first click to focus the window, this will not take effect
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32) || (CC_TARGET_PLATFORM == CC_PLATFORM_MAC)
+    auto listener = cocos2d::EventListenerTouchOneByOne::create();
     listener->setSwallowTouches(true);
-    listener->onTouchBegan = [](Touch* touch, Event*) -> bool {
-        bool inImGuiWidgets = ImGui::IsAnyWindowHovered();
-        
-        return inImGuiWidgets;
+    listener->onTouchBegan = [](cocos2d::Touch* touch, cocos2d::Event*) -> bool {
+        return ImGui::IsAnyWindowHovered();
     };
     getEventDispatcher()->addEventListenerWithSceneGraphPriority(listener, this);
+#endif
     return true;
 }
 
 void ImGuiLayer::visit(cocos2d::Renderer *renderer, const cocos2d::Mat4 &parentTransform, uint32_t parentFlags)
 {
-    Layer::visit(renderer, parentTransform, parentFlags);
+    Node::visit(renderer, parentTransform, parentFlags);
     _command.init(_globalZOrder);
     _command.func = CC_CALLBACK_0(ImGuiLayer::onDraw, this);
-    Director::getInstance()->getRenderer()->addCommand(&_command);
+    cocos2d::Director::getInstance()->getRenderer()->addCommand(&_command);
 }
 
 void ImGuiLayer::onDraw()
 {
-#if COCOS2D_VERSION < 0x00040000
     getGLProgram()->use();
-#endif
 
     // create frame
-    ImGui_ImplCocos2dx_NewFrame();
-    
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
     // draw all gui
-    CCIMGUI::getInstance()->updateImGUI();
-    
-#if COCOS2D_VERSION < 0x00040000
-    // rendering
+    CCIMGUI::getInstance()->update();
+
+    // render
     glUseProgram(0);
-#endif
-    
     ImGui::Render();
-    
-    ImGui_ImplCocos2dx_RenderDrawData(ImGui::GetDrawData());
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }

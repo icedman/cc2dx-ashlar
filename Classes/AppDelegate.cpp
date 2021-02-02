@@ -26,18 +26,23 @@
 #include "HelloWorldScene.h"
 
 // #define USE_AUDIO_ENGINE 1
+// #define USE_SIMPLE_AUDIO_ENGINE 1
+
+#if USE_AUDIO_ENGINE && USE_SIMPLE_AUDIO_ENGINE
+#error "Don't use AudioEngine and SimpleAudioEngine at the same time. Please just select one in your game!"
+#endif
 
 #if USE_AUDIO_ENGINE
 #include "audio/include/AudioEngine.h"
+using namespace cocos2d::experimental;
+#elif USE_SIMPLE_AUDIO_ENGINE
+#include "audio/include/SimpleAudioEngine.h"
+using namespace CocosDenshion;
 #endif
 
 USING_NS_CC;
 
-#if defined(__ANDROID__)
-    static cocos2d::Size designResolutionSize = cocos2d::Size(480, 320);
-#else
-    static cocos2d::Size designResolutionSize = cocos2d::Size(1024, 768);
-#endif
+static cocos2d::Size designResolutionSize = cocos2d::Size(1024, 768);
 static cocos2d::Size smallResolutionSize = cocos2d::Size(480, 320);
 static cocos2d::Size mediumResolutionSize = cocos2d::Size(1024, 768);
 static cocos2d::Size largeResolutionSize = cocos2d::Size(2048, 1536);
@@ -50,6 +55,8 @@ AppDelegate::~AppDelegate()
 {
 #if USE_AUDIO_ENGINE
     AudioEngine::end();
+#elif USE_SIMPLE_AUDIO_ENGINE
+    SimpleAudioEngine::end();
 #endif
 }
 
@@ -76,9 +83,9 @@ bool AppDelegate::applicationDidFinishLaunching() {
     auto glview = director->getOpenGLView();
     if(!glview) {
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_WIN32) || (CC_TARGET_PLATFORM == CC_PLATFORM_MAC) || (CC_TARGET_PLATFORM == CC_PLATFORM_LINUX)
-        glview = GLViewImpl::createWithRect("ashlar", cocos2d::Rect(0, 0, designResolutionSize.width, designResolutionSize.height));
+        glview = GLViewImpl::createWithRect("hello_World", cocos2d::Rect(0, 0, designResolutionSize.width, designResolutionSize.height));
 #else
-        glview = GLViewImpl::create("ashlar");
+        glview = GLViewImpl::create("hello_World");
 #endif
         director->setOpenGLView(glview);
     }
@@ -125,6 +132,9 @@ void AppDelegate::applicationDidEnterBackground() {
 
 #if USE_AUDIO_ENGINE
     AudioEngine::pauseAll();
+#elif USE_SIMPLE_AUDIO_ENGINE
+    SimpleAudioEngine::getInstance()->pauseBackgroundMusic();
+    SimpleAudioEngine::getInstance()->pauseAllEffects();
 #endif
 }
 
@@ -134,5 +144,8 @@ void AppDelegate::applicationWillEnterForeground() {
 
 #if USE_AUDIO_ENGINE
     AudioEngine::resumeAll();
+#elif USE_SIMPLE_AUDIO_ENGINE
+    SimpleAudioEngine::getInstance()->resumeBackgroundMusic();
+    SimpleAudioEngine::getInstance()->resumeAllEffects();
 #endif
 }

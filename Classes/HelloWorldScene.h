@@ -26,7 +26,6 @@
 #define __HELLOWORLD_SCENE_H__
 
 #include "cocos2d.h"
-#include "CursesTileMap.hpp"
 
 class HelloWorld : public cocos2d::Scene
 {
@@ -34,7 +33,7 @@ public:
     static cocos2d::Scene* createScene();
 
     virtual bool init();
-    
+
     void update(float dt);
 
     // a selector callback
@@ -42,8 +41,6 @@ public:
     
     // implement the "static create()" method manually
     CREATE_FUNC(HelloWorld);
-
-    CursesTileMap *displayMap;
 };
 
 #endif // __HELLOWORLD_SCENE_H__

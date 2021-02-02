@@ -686,3 +686,7 @@ int _keyMods()
 {
     return keyMods;
 }
+
+void _editorBegin() {}
+void _ditorLine() {}
+void _editorEnd() {}
